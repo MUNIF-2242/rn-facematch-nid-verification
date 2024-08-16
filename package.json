@@ -11,7 +11,6 @@
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.23.1",
-    "aws-sdk": "^2.1650.0",
     "axios": "^1.7.4",
     "expo": "~51.0.16",
     "expo-camera": "~15.0.14",
