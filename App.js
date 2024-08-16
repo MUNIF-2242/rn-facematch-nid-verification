@@ -1,18 +1,26 @@
 import React, { useState } from "react";
-import { View, Button, Image, Alert, Text } from "react-native";
+import {
+  View,
+  Button,
+  Image,
+  Alert,
+  Text,
+  ActivityIndicator,
+} from "react-native";
 import * as ImagePicker from "expo-image-picker";
 
 const App = () => {
-  const [image, setImage] = useState(null);
   const [selfieImage, setSelfieImage] = useState(null);
   const [nidImage, setNidImage] = useState(null);
-  const [nidImageName, setNidImageName] = useState(null);
   const [selfieUrl, setSelfieUrl] = useState("");
   const [nidUrl, setNidUrl] = useState("");
   const [faceComparisonResult, setFaceComparisonResult] = useState("");
+
   const [name, setName] = useState("");
   const [dob, setDob] = useState("");
   const [nid, setNid] = useState("");
+
+  const [loading, setLoading] = useState(false); // New state for loading
 
   // Function to handle taking a selfie
   const pickImage = async () => {
@@ -61,6 +69,7 @@ const App = () => {
 
   // Function to upload selfie to the first API
   const uploadSelfie = async (base64Image) => {
+    setLoading(true); // Start loading
     try {
       const response = await fetch(`${BASE_URL}/uploadSelfie`, {
         method: "POST",
@@ -82,10 +91,13 @@ const App = () => {
       }
     } catch (error) {
       Alert.alert("An error occurred", error.message);
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
 
   const uploadNid = async (base64Image) => {
+    setLoading(true); // Start loading
     try {
       const response = await fetch(`${BASE_URL}/uploadNid`, {
         method: "POST",
@@ -98,26 +110,25 @@ const App = () => {
       const data = await response.json();
       if (response.ok) {
         setNidUrl(data.imageUrl); // Assuming the response contains the URL of the uploaded selfie
-        Alert.alert(
-          "Selfie uploaded successfully!",
-          `Selfie URL: ${data.imageUrl}`
-        );
+        Alert.alert("NID uploaded successfully!", `NID URL: ${data.imageUrl}`);
       } else {
-        Alert.alert("Failed to upload selfie", `Error: ${data.message}`);
+        Alert.alert("Failed to upload NID", `Error: ${data.message}`);
       }
     } catch (error) {
       Alert.alert("An error occurred", error.message);
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
 
   // Function to compare faces using the third API
   const compareFaces = async () => {
-    console.log(nidImage);
     if (!selfieUrl || !nidUrl) {
       Alert.alert("Please upload both selfie and NID images first!");
       return;
     }
 
+    setLoading(true); // Start loading
     try {
       const response = await fetch(`${BASE_URL}/compareFace`, {
         method: "POST",
@@ -128,7 +139,6 @@ const App = () => {
       });
 
       const data = await response.json();
-      console.log(data);
       setFaceComparisonResult(data.message);
 
       if (response.ok) {
@@ -143,13 +153,14 @@ const App = () => {
       }
     } catch (error) {
       Alert.alert("An error occurred", error.message);
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
 
-  //Function
+  // Function to detect texts
   const detectTexts = async () => {
-    console.log("call detect text");
-
+    setLoading(true); // Start loading
     try {
       const response = await fetch(
         `${BASE_URL}/detectText`, // Replace with your actual API endpoint
@@ -161,7 +172,7 @@ const App = () => {
           body: JSON.stringify({ fileName: "nid.jpg" }),
         }
       );
-      console.log("nidImageName" + nidImageName);
+
       const data = await response.json();
       setName(data.name);
       setDob(data.dob);
@@ -177,6 +188,8 @@ const App = () => {
       }
     } catch (error) {
       Alert.alert("An error occurred", error.message);
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
 
@@ -213,24 +226,29 @@ const App = () => {
           }}
         ></View>
       )}
-
       <Button
-        title="Select Image from Gallery"
+        title="Take NID Image"
         onPress={pickNid}
         style={{ marginTop: 10 }}
       />
       {faceComparisonResult && <Text>{faceComparisonResult}</Text>}
       <Button
-        title="Compare Faces"
+        title="Compare Faces And Extract Info"
         onPress={compareFaces}
         style={{ marginTop: 10 }}
       />
+      {loading && (
+        <View style={{ marginTop: 20 }}>
+          <ActivityIndicator size="large" color="#0000ff" />
+          <Text>Loading...</Text>
+        </View>
+      )}
       <View>
-        <Text>Name</Text>
+        <Text style={{ fontWeight: "bold" }}>Name</Text>
         <Text>{name}</Text>
-        <Text>Dob</Text>
+        <Text style={{ fontWeight: "bold" }}>Dob</Text>
         <Text>{dob}</Text>
-        <Text>Nid</Text>
+        <Text style={{ fontWeight: "bold" }}>Nid</Text>
         <Text>{nid}</Text>
       </View>
     </View>
